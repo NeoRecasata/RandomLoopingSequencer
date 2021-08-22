@@ -1,17 +1,26 @@
 /*
- * Random Looping Sequencer with random pulses/trigers
- * Code by: Neo Recasata
- * 
- * TODO: 
- * Steps encoder (Changes the step length)
- * MCP-4725 voltage output for CV
- * 
- * This currently has:
- * 1. Random CV with randomness potentiometer
- * 2. CV Step Erase feature
- * 3. Random trigger with probability potentiometer
- * 4. Trigger Step Erase feature
+   Random Looping Sequencer with random pulses/trigers
+   Code by: Neo Recasata
+
+   TODO:
+   Steps encoder (Changes the step length)
+   MCP-4725 voltage output for CV (DONE)
+
+   This currently has:
+   1. Random CV with randomness potentiometer
+   2. CV Step Erase feature
+   3. Random trigger with probability potentiometer
+   4. Trigger Step Erase feature
+
+   DAC PINS
+   SDA -> A4
+   SCL -> A5
 */
+
+#include <Wire.h>
+#include <Adafruit_MCP4725.h>
+
+Adafruit_MCP4725 dac;
 
 #define potPin A0
 #define pot2Pin A1
@@ -26,87 +35,99 @@ int sequence[16]; //step array
 int pulseSequence[16]; //array of triggers/pulses
 int count = 0; //number of steps
 int randNum = 0;
-int steps = 16;ccc
+int steps = 16;
 
 void setup() {
   Serial.begin(115200);
   pinMode(pulsePin, OUTPUT);
+
+  // For Adafruit MCP4725A1 the address is 0x62 (default) or 0x63 (ADDR pin tied to VCC)
+  // For MCP4725A0 the address is 0x60 or 0x61
+  // For MCP4725A2 the address is 0x64 or 0x65
+  dac.begin(0x62);
+
+  dac.setVoltage(0, false);
 }
 
 void loop() {
-  
-  
+
+
   do {
     //generate a 12bit random number
-    randNum = random(0,4096);
-    
-    if(digitalRead(clockPin) == LOW) {
+    randNum = random(0, 4096);
 
+    if (digitalRead(clockPin) == LOW) {
+
+      //check if cv erase switch is high
       cvErase();
-
-      pulseErase();
       
+      //check if pulse erase switch is high
+      pulseErase();
+
+      //change voltage of step depending on the cv pot
       changeStepCv();
 
       //Output cv
       Serial.print(count);
-      Serial.print(" "); 
+      Serial.print(" ");
+      dac.setVoltage(sequence[count], false);
       Serial.println(sequence[count]);
 
+      //change voltage of step depending on the pulse pot
       changeStepPulse();
 
       //Output pulse
-      if(pulseSequence[count]==1) {
+      if (pulseSequence[count] == 1) {
         Serial.println("pulse");
         digitalWrite(trigLed, HIGH);
-        digitalWrite(pulsePin,HIGH);
+        digitalWrite(pulsePin, HIGH);
         delay(12);
         digitalWrite(trigLed, LOW);
         digitalWrite(pulsePin, LOW);
       }
-      
-      count+=1;
+
+      count += 1;
     }
-    
+
     //wait if clock is low (Credits to Benjie Jiao's RandomTriggers)
-    while(digitalRead(clockPin) == LOW) delay(1);
-    
-  }while(count<steps);
+    while (digitalRead(clockPin) == LOW) delay(1);
+
+  } while (count < steps);
   count = 0;
 }
 
-static bool getRandomBool(int probability){
+static bool getRandomBool(int probability) {
   //returns true or false based on the probability
-  //randVal starts from 10 to help keep the pot at 0 when it is fully ccw
-  int randVal = random(10,1023);
+  //randVal starts from 10 to help keep the pot at 0 when it is fully ccw and ends at 1013
+  int randVal = random(10, 1013);
   return randVal <= probability;
 }
 
 static void cvErase() {
   //erase or set to 0 the current step if the erase pin is high
-      if(digitalRead(cvErasePin) == HIGH) {
-        sequence[count] = 0;
-      }
+  if (digitalRead(cvErasePin) == HIGH) {
+    sequence[count] = 0;
+  }
 }
 
 static void pulseErase() {
   //erase or set to 0 the current step if the erase pin is high
-      if(digitalRead(pulseSequenceErasePin) == HIGH) {
-        sequence[count] = 0;
-      }
+  if (digitalRead(pulseSequenceErasePin) == HIGH) {
+    sequence[count] = 0;
+  }
 }
 
 static void changeStepCv() {
   //randomly change values in the array depending on the potentiometer
-      if(getRandomBool(analogRead(potPin))) {
-        sequence[count] = randNum;
-      }
+  if (getRandomBool(analogRead(potPin))) {
+    sequence[count] = randNum;
+  }
 }
 
 static void changeStepPulse() {
   //randomly generate triggers based on the trigger potentiometer
-      if(getRandomBool(analogRead(pot2Pin))) {
-        Serial.println(pulseSequence[count]);
-        pulseSequence[count] = 1;
-      } 
+  if (getRandomBool(analogRead(pot2Pin))) {
+    Serial.println(pulseSequence[count]);
+    pulseSequence[count] = 1;
+  }
 }
