@@ -6,6 +6,6 @@ Highly inspired by Tom Whitwell's Turing Machine Eurorack Module
 3. Random trigger with probability potentiometer
 ## TODO
 - [ ] 1. Steps encoder (Changes the step length)
-- [ ] 2. MCP-4725 voltage output for CV
+- [x] 2. MCP-4725 voltage output for CV
 - [x] 3. Schematic
 - [ ] 4. Board
