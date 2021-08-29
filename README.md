@@ -34,3 +34,6 @@ All inputs are protected. <br>
 |---------|------------------|----------------|
 | CV      | 0-5v             | N/A            |
 | Trigger | 0-5v             | 12ms           |
+
+## Demo
+Coming soon!
