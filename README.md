@@ -36,4 +36,4 @@ All inputs are protected. <br>
 | Trigger | 0-5v             | 12ms           |
 
 ## Demo
-Coming soon!
+https://youtu.be/DCTG8a65CnQ
